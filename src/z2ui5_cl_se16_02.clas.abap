@@ -142,12 +142,12 @@
 
      IF mo_layout IS NOT BOUND.
 
-       mo_layout = z2ui5_cl_pop_display_layout=>init_layout( control  = z2ui5_cl_layout=>m_table
-                                                data     = mr_table
-                                                handle01 =  ''
-                                                handle02 =  'Z2UI5_T_01'
-                                                handle03 = ''
-                                                handle04 = '' ).
+       mo_layout = z2ui5_cl_layout=>factory( control  = z2ui5_cl_layout=>m_table
+                                             data     = mr_table
+                                             handle01 = 'Z2UI5_CL_SE16'
+                                             handle02 = 'Z2UI5_T_01'
+                                             handle03 = ''
+                                             handle04 = '' ).
 
      ENDIF.
 

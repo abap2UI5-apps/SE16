@@ -31,36 +31,37 @@
 
    METHOD on_event.
 
-     TRY.
-         CASE client->get( )-event.
+     CASE client->get( )-event.
 
-           WHEN 'DISPLAY_POPUP_SELECT_LAYOUT'.
-             client->nav_app_call( z2ui5_cl_pop_display_layout=>choose_layout(
-                                     handle01 = 'z2ui5_cl_se16'
-                                     handle02 = mo_selscreen->mv_tabname
-                                     handle03 = 'MY_HANDLE'
-                                   ) ).
+       WHEN 'DISPLAY_POPUP_SELECT_LAYOUT'.
 
-           WHEN `POST`.
-             view_display( ).
+         DATA lr_table TYPE REF TO data.
+         CREATE DATA lr_table TYPE TABLE OF spfli.
+         DATA(lo_layout) = z2ui5_cl_layout=>factory( control  = z2ui5_cl_layout=>m_table
+                                      data     = lr_table
+                                      handle01 = 'Z2UI5_CL_SE16'
+                                      handle02 = 'Z2UI5_T_01'
+                                      handle03 = ''
+                                      handle04 = '' ).
 
-           WHEN 'BACK'.
-             client->nav_app_leave( ).
+         client->nav_app_call( z2ui5_cl_pop_display_layout=>factory(
+                                 layout        = lo_layout
+                                 open_layout   = 'X' ) ).
 
-           WHEN 'GO'.
-             DATA(lo_tab_output) = NEW z2ui5_cl_se16_tab_view( ).
-             client->nav_app_call( lo_tab_output ).
 
-           WHEN OTHERS.
-             mo_selscreen->on_event( client ).
 
-         ENDCASE.
+       WHEN 'BACK'.
+         client->nav_app_leave( ).
 
-       CATCH cx_root INTO DATA(x).
-         client->message_box_display(
-           text              = x->get_text( )
-           type              = `error` ).
-     ENDTRY.
+       WHEN 'GO'.
+         DATA(lo_tab_output) = NEW z2ui5_cl_se16_02( ).
+         client->nav_app_call( lo_tab_output ).
+
+       WHEN OTHERS.
+         mo_selscreen->on_event( client ).
+
+     ENDCASE.
+
    ENDMETHOD.
 
 
@@ -100,44 +101,38 @@
 
 
    METHOD z2ui5_if_app~main.
+     TRY.
 
-     me->client = client.
+         me->client = client.
 
-     IF mv_check_initialized = abap_false.
-       mv_check_initialized = abap_true.
-       mo_selscreen = NEW z2ui5_cl_selscreen( ).
-       mo_selscreen->mv_tabname = `USR01`.
-       ms_sel-number_entries = 100.
-       view_display( ).
-       RETURN.
-
-     ENDIF.
-
-     IF client->get( )-check_on_navigated = abap_true.
-       TRY.
-           DATA(lo_layout) = CAST z2ui5_cl_pop_display_layout( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-           ms_sel-s_layout = lo_layout->mo_layout->ms_layout.
+         IF mv_check_initialized = abap_false.
+           mv_check_initialized = abap_true.
+           mo_selscreen = NEW z2ui5_cl_selscreen( ).
+           mo_selscreen->mv_tabname = `USR01`.
+           ms_sel-number_entries = 100.
+           view_display( ).
            RETURN.
-         CATCH cx_root.
-       ENDTRY.
+         ENDIF.
 
-       TRY.
-           DATA(lo_popup) = CAST z2ui5_cl_pop_get_range( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-           IF lo_popup->result( )-check_confirmed = abap_true.
-             ASSIGN mo_selscreen->mt_filter_tab[ name = mo_selscreen->mv_popup_name ] TO FIELD-SYMBOL(<tab>).
-             <tab>-t_range = lo_popup->result( )-t_range.
-             <tab>-t_token = z2ui5_cl_util=>filter_get_token_t_by_range_t( <tab>-t_range ).
-             client->view_model_update( ).
-           ENDIF.
-         CATCH cx_root.
-       ENDTRY.
-       RETURN.
-     ENDIF.
+         IF client->get( )-check_on_navigated = abap_true.
+           TRY.
+               DATA(lo_layout) = CAST z2ui5_cl_pop_display_layout( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+               ms_sel-s_layout = lo_layout->mo_layout->ms_layout.
+               RETURN.
+             CATCH cx_root.
+           ENDTRY.
+           mo_selscreen->on_navigated( client ).
+         ENDIF.
 
-     IF client->get( )-event IS NOT INITIAL.
-       on_event( ).
-     ENDIF.
+         IF client->get( )-event IS NOT INITIAL.
+           on_event( ).
+         ENDIF.
 
+       CATCH cx_root INTO DATA(x).
+         client->message_box_display(
+           text              =  x->get_text( )
+           type              = `error` ).
+     ENDTRY.
    ENDMETHOD.
 
  ENDCLASS.
