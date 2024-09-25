@@ -23,25 +23,19 @@
 
  CLASS z2ui5_cl_se16_02 IMPLEMENTATION.
 
-
    METHOD on_event.
 
      CASE client->get( )-event.
-
        WHEN `BUTTON_START`.
          mo_sql->read( ).
          view_display( ).
-
        WHEN 'BACK'.
          client->nav_app_leave( ).
-
        WHEN OTHERS.
-         z2ui5_cl_pop_display_layout=>on_event_layout( client = client
-                                                        layout = mo_layout ).
+         z2ui5_cl_pop_display_layout=>on_event_layout( client = client layout = mo_layout ).
      ENDCASE.
 
    ENDMETHOD.
-
 
 
    METHOD view_display.

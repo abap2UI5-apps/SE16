@@ -12,6 +12,8 @@ CLASS z2ui5_cl_util_sql DEFINITION PUBLIC.
     DATA ms_sql  TYPE z2ui5_cl_util=>ty_s_sql.
 
     METHODS read.
+    METHODS count.
+
 ENDCLASS.
 
 CLASS z2ui5_cl_util_sql IMPLEMENTATION.
@@ -43,6 +45,27 @@ CLASS z2ui5_cl_util_sql IMPLEMENTATION.
      UP TO 100 ROWS.
 
 
+  ENDMETHOD.
+
+
+  METHOD count.
+
+
+    IF ms_sql-t_ref IS NOT BOUND.
+      CREATE DATA ms_sql-t_ref  TYPE STANDARD TABLE OF (ms_sql-tabname) WITH EMPTY KEY.
+    ENDIF.
+
+    "Variante lesen
+    "SQL Select machen
+
+    DATA lv_result TYPE string.
+
+    SELECT FROM (ms_sql-tabname)
+     FIELDS
+     COUNT( * )
+     WHERE (lv_result)
+     INTO @ms_sql-count.
 
   ENDMETHOD.
+
 ENDCLASS.
