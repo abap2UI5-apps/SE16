@@ -9,9 +9,9 @@
          tabname        TYPE string,
          number_entries TYPE i,
          check_autoload TYPE abap_bool,
-         s_layout       TYPE  z2ui5_cl_layout=>ty_s_layout,
+         s_layout       TYPE z2ui5_cl_layout=>ty_s_layout,
+         "   s_sql          TYPE z2ui5_cl_util=>ty_s_sql,
        END OF ms_sel.
-     DATA mt_filter_tab TYPE z2ui5_cl_util=>ty_t_filter_multi.
 
      DATA mo_selscreen   TYPE REF TO z2ui5_cl_selscreen.
 
@@ -37,7 +37,7 @@
 
          DATA lr_table TYPE REF TO data.
          CREATE DATA lr_table TYPE TABLE OF spfli.
-         DATA(lo_layout) = z2ui5_cl_layout=>factory( control  = z2ui5_cl_layout=>m_table
+         DATA(lo_layout) = z2ui5_cl_layout=>factory( control = z2ui5_cl_layout=>m_table
                                       data     = lr_table
                                       handle01 = 'Z2UI5_CL_SE16'
                                       handle02 = 'Z2UI5_T_01'
@@ -49,12 +49,12 @@
                                  open_layout   = 'X' ) ).
 
 
-
        WHEN 'BACK'.
          client->nav_app_leave( ).
 
        WHEN 'GO'.
          DATA(lo_tab_output) = NEW z2ui5_cl_se16_02( ).
+         lo_tab_output->mo_sql = z2ui5_cl_util_sql=>factory( mo_selscreen->ms_sql ).
          client->nav_app_call( lo_tab_output ).
 
        WHEN OTHERS.
@@ -75,12 +75,8 @@
               shownavbutton = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
            ).
 
-     IF mo_selscreen->mv_tabname IS NOT INITIAL.
-
-       mo_selscreen->paint(
-         view   = page
-         client = client ).
-
+     IF mo_selscreen->ms_sql-tabname IS NOT INITIAL.
+       mo_selscreen->paint( view = page client = client ).
      ENDIF.
 
      page->footer( )->overflow_toolbar(
@@ -108,8 +104,8 @@
          IF mv_check_initialized = abap_false.
            mv_check_initialized = abap_true.
            mo_selscreen = NEW z2ui5_cl_selscreen( ).
-           mo_selscreen->mv_tabname = `USR01`.
-           ms_sel-number_entries = 100.
+           mo_selscreen->ms_sql-tabname = `USR01`.
+           mo_selscreen->ms_sql-up_to_rows =  100.
            view_display( ).
            RETURN.
          ENDIF.
@@ -121,6 +117,14 @@
                RETURN.
              CATCH cx_root.
            ENDTRY.
+
+           TRY.
+               CAST z2ui5_cl_se16_02( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+               view_display( ).
+               RETURN.
+             CATCH cx_root.
+           ENDTRY.
+
            mo_selscreen->on_navigated( client ).
          ENDIF.
 
@@ -129,9 +133,7 @@
          ENDIF.
 
        CATCH cx_root INTO DATA(x).
-         client->message_box_display(
-           text              =  x->get_text( )
-           type              = `error` ).
+         client->message_box_display( text = x->get_text( ) type = `error` ).
      ENDTRY.
    ENDMETHOD.
 
