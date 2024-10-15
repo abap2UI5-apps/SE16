@@ -122,6 +122,7 @@
      mo_ui_ranges = NEW z2ui5_cl_ui_build_ranges( ).
      mo_ui_ranges->mo_sql = NEW #( ).
      mo_ui_ranges->mo_sql->ms_sql-tabname = `USR01`.
+     mo_ui_ranges->mo_sql->ms_sql-count   = `500`.
 
      DATA lr_table TYPE REF TO data.
      CREATE DATA lr_table TYPE TABLE OF spfli.
