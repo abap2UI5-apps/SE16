@@ -42,7 +42,7 @@ CLASS z2ui5_cl_util_sql IMPLEMENTATION.
      *
      WHERE (lv_result)
      INTO TABLE @ms_sql-t_ref->*
-     UP TO 100 ROWS.
+     UP TO @ms_sql-count ROWS.
 
 
   ENDMETHOD.
