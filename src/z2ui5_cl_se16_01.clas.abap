@@ -62,7 +62,7 @@
      ENDIF.
 
      page->footer( )->overflow_toolbar(
-         )->button( text = `Go` type = `Emphasized` press = client->_event( `GO` ) ).
+         )->button( text = z2ui5_cl_util_sql=>go_button( )-text type = `Emphasized` press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name ) ).
 
      client->view_display( view->stringify( ) ).
 
