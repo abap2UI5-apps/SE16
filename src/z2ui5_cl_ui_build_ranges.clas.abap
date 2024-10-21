@@ -75,7 +75,7 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
                     description = `Tablename`
                     width = '30%'
                     submit = client->_event( `SELSCREEN_POST` )
-                )->button( press = client->_event( `GO` ) icon = `sap-icon://simulate`
+                )->button( press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name ) icon = z2ui5_cl_util_sql=>go_button( )-icon_name tooltip = z2ui5_cl_util_sql=>go_button( )-text
 
              )->input(
              width = '10%'

@@ -3,6 +3,12 @@ CLASS z2ui5_cl_util_sql DEFINITION PUBLIC.
 
     INTERFACES if_serializable_object.
 
+    types: begin of t_go_button,
+             event_name type string,
+             icon_name type string,
+             text type string,
+           end of t_go_button.
+
     CLASS-METHODS factory
       IMPORTING
         i_sql           TYPE z2ui5_cl_util=>ty_s_sql OPTIONAL
@@ -14,6 +20,10 @@ CLASS z2ui5_cl_util_sql DEFINITION PUBLIC.
     METHODS read.
     METHODS count.
 
+    class-methods go_button
+                    returning
+                      value(r_val) type z2ui5_cl_util_sql=>t_go_button.
+
 ENDCLASS.
 
 CLASS z2ui5_cl_util_sql IMPLEMENTATION.
@@ -24,6 +34,16 @@ CLASS z2ui5_cl_util_sql IMPLEMENTATION.
     r_result->ms_sql = i_sql.
 
   ENDMETHOD.
+
+
+  METHOD go_button.
+
+    r_val = value #( event_name = `GO`
+                     icon_name = `sap-icon://simulate`
+                     text = 'Go'(001) ).
+
+  ENDMETHOD.
+
 
   METHOD read.
 
