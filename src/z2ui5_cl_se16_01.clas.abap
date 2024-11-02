@@ -1,140 +1,137 @@
- CLASS z2ui5_cl_se16_01 DEFINITION PUBLIC.
+CLASS z2ui5_cl_se16_01 DEFINITION PUBLIC.
 
-   PUBLIC SECTION.
+  PUBLIC SECTION.
+    INTERFACES z2ui5_if_app.
 
-     INTERFACES z2ui5_if_app.
-     DATA mo_ui_ranges TYPE REF TO z2ui5_cl_ui_build_ranges.
-     DATA mo_layout    TYPE REF TO  z2ui5_cl_layout.
+    DATA mo_ui_ranges TYPE REF TO z2ui5_cl_ui_build_ranges.
 
-   PROTECTED SECTION.
-     DATA client TYPE REF TO z2ui5_if_client.
-     DATA mv_check_initialized TYPE abap_bool.
+  PROTECTED SECTION.
+    DATA client TYPE REF TO z2ui5_if_client.
 
-     METHODS on_event.
-     METHODS view_display.
-     METHODS on_navigated.
-     METHODS on_init.
+    METHODS on_event.
+    METHODS view_display.
+    METHODS on_navigated.
+    METHODS on_init.
 
-   PRIVATE SECTION.
- ENDCLASS.
+  PRIVATE SECTION.
+ENDCLASS.
 
 
- CLASS z2ui5_cl_se16_01 IMPLEMENTATION.
+CLASS z2ui5_cl_se16_01 IMPLEMENTATION.
 
-   METHOD on_event.
+  METHOD on_event.
 
-     CASE client->get( )-event.
+    CASE client->get( )-event.
 
-       WHEN 'DISPLAY_POPUP_SELECT_LAYOUT'.
+      WHEN 'DISPLAY_POPUP_SELECT_LAYOUT'.
+        client->nav_app_call( z2ui5_cl_layout=>choose_layout( handle01 = 'ZSE16'
+                                                              handle02 = mo_ui_ranges->mo_sql->ms_sql-tabname ) ).
 
-         client->nav_app_call( z2ui5_cl_layout=>choose_layout(
-              handle01 = 'z2ui5_cl_se16_01'
-              handle02 = mo_ui_ranges->mo_sql->ms_sql-tabname
-         ) ).
-       WHEN 'BACK'.
-         client->nav_app_leave( ).
+      WHEN 'GO'.
+        DATA(lo_tab_output) = NEW z2ui5_cl_se16_02( ).
+        lo_tab_output->mo_sql = z2ui5_cl_util_sql=>factory( mo_ui_ranges->mo_sql->ms_sql ).
+        client->nav_app_call( lo_tab_output ).
 
-       WHEN 'GO'.
-         DATA(lo_tab_output) = NEW z2ui5_cl_se16_02( ).
-         lo_tab_output->mo_sql = z2ui5_cl_util_sql=>factory( mo_ui_ranges->mo_sql->ms_sql ).
-         client->nav_app_call( lo_tab_output ).
+      WHEN 'BACK'.
+        client->nav_app_leave( ).
 
-       WHEN OTHERS.
-         mo_ui_ranges->on_event( client ).
+      WHEN OTHERS.
+        mo_ui_ranges->on_event( client ).
 
-     ENDCASE.
+    ENDCASE.
 
-   ENDMETHOD.
+  ENDMETHOD.
 
+  METHOD view_display.
 
-   METHOD view_display.
+    DATA(view) = z2ui5_cl_xml_view=>factory( ).
 
-     DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA(page) = view->shell( )->page( title          = 'abap2UI5 - SE16 CLOUD - Start'
+                                       navbuttonpress = client->_event( 'BACK' )
+                                       shownavbutton  = client->check_app_prev_stack( ) ).
 
-     DATA(page) = view->shell( )->page( id = `page_main`
-              title          = 'abap2UI5 - SE16 CLOUD - Start'
-              navbuttonpress = client->_event( 'BACK' )
-              shownavbutton = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
-           ).
+    IF mo_ui_ranges->mo_sql->ms_sql-tabname IS NOT INITIAL.
+      mo_ui_ranges->paint( view   = page
+                           client = client ).
+    ENDIF.
 
-     IF mo_ui_ranges->mo_sql->ms_sql-tabname IS NOT INITIAL.
-       mo_ui_ranges->paint( view = page client = client ).
-     ENDIF.
+    page->footer( )->overflow_toolbar(
+        )->toolbar_spacer(
+        )->button( text  = z2ui5_cl_util_sql=>go_button( )-text
+                   type  = `Emphasized`
+                   press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name ) ).
 
-     page->footer( )->overflow_toolbar(
-         )->button( text = z2ui5_cl_util_sql=>go_button( )-text type = `Emphasized` press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name ) ).
+    client->view_display( view->stringify( ) ).
 
-     client->view_display( view->stringify( ) ).
+  ENDMETHOD.
 
-   ENDMETHOD.
+  METHOD z2ui5_if_app~main.
+    TRY.
 
+        me->client = client.
 
-   METHOD z2ui5_if_app~main.
-     TRY.
+        IF client->check_on_init( ).
+          on_init( ).
+        ELSEIF client->check_on_navigated( ).
+          on_navigated( ).
+        ELSE.
+          on_event( ).
+        ENDIF.
 
-         me->client = client.
+      CATCH cx_root INTO DATA(x).
+        client->message_box_display( x ).
+    ENDTRY.
+  ENDMETHOD.
 
-         IF mv_check_initialized = abap_false.
-           mv_check_initialized = abap_true.
-           on_init( ).
-           RETURN.
-         ENDIF.
+  METHOD on_navigated.
 
-         IF client->get( )-check_on_navigated = abap_true.
-           on_navigated( ).
-           RETURN.
-         ENDIF.
+    TRY.
+        DATA(lo_popup) = CAST z2ui5_cl_pop_to_sel_w_layout( client->get_app_prev( ) ).
+        DATA(lo_layout) = lo_popup->result( ).
 
-         IF client->get( )-event IS NOT INITIAL.
-           on_event( ).
-           RETURN.
-         ENDIF.
+        IF lo_layout-check_confirmed = abap_true.
 
-       CATCH cx_root INTO DATA(x).
-         client->message_box_display( text = x->get_text( ) type = `error` ).
-     ENDTRY.
-   ENDMETHOD.
+          DATA(layout) = VALUE z2ui5_layo_t_01( ).
+          layout = lo_layout-row->*.
+          mo_ui_ranges->mo_sql->ms_sql-layout_name = layout-layout.
+          mo_ui_ranges->mo_sql->ms_sql-layout_id   = layout-guid.
+          client->view_model_update( ).
 
+        ENDIF.
 
-   METHOD on_navigated.
+      CATCH cx_root.
+    ENDTRY.
 
-     TRY.
-         DATA(lo_layout) = CAST z2ui5_cl_pop_display_layout( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-         mo_layout = lo_layout->mo_layout.
-         RETURN.
-       CATCH cx_root.
-     ENDTRY.
+    TRY.
+        CAST z2ui5_cl_se16_02( client->get_app_prev( ) ).
+        view_display( ).
+        RETURN.
+      CATCH cx_root.
+    ENDTRY.
 
-     TRY.
-         CAST z2ui5_cl_se16_02( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-         view_display( ).
-         RETURN.
-       CATCH cx_root.
-     ENDTRY.
+    mo_ui_ranges->on_navigated( client ).
 
-     mo_ui_ranges->on_navigated( client ).
+  ENDMETHOD.
 
-   ENDMETHOD.
+  METHOD on_init.
 
+    DATA lr_table TYPE REF TO data.
 
-   METHOD on_init.
+    mo_ui_ranges = NEW z2ui5_cl_ui_build_ranges( ).
+    mo_ui_ranges->mo_sql = NEW #( ).
+    mo_ui_ranges->mo_sql->ms_sql-tabname = `USR01`.
+    mo_ui_ranges->mo_sql->ms_sql-count   = `500`.
 
-     mo_ui_ranges = NEW z2ui5_cl_ui_build_ranges( ).
-     mo_ui_ranges->mo_sql = NEW #( ).
-     mo_ui_ranges->mo_sql->ms_sql-tabname = `USR01`.
-     mo_ui_ranges->mo_sql->ms_sql-count   = `500`.
+    CREATE DATA lr_table TYPE TABLE OF spfli.
+    mo_ui_ranges->mo_layout = z2ui5_cl_layout=>factory( control  = z2ui5_cl_layout=>m_table
+                                          data     = lr_table
+                                          handle01 = 'Z2UI5_CL_SE16'
+                                          handle02 = mo_ui_ranges->mo_sql->ms_sql-tabname
+                                          handle03 = ''
+                                          handle04 = '' ).
 
-     DATA lr_table TYPE REF TO data.
-     CREATE DATA lr_table TYPE TABLE OF spfli.
-     mo_layout = z2ui5_cl_layout=>factory( control = z2ui5_cl_layout=>m_table
-                                     data     = lr_table
-                                     handle01 = 'Z2UI5_CL_SE16'
-                                     handle02 = 'Z2UI5_T_01'
-                                     handle03 = ''
-                                     handle04 = '' ).
+    view_display( ).
 
-     view_display( ).
+  ENDMETHOD.
 
-   ENDMETHOD.
-
- ENDCLASS.
+ENDCLASS.
