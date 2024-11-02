@@ -6,9 +6,9 @@ CLASS z2ui5_cl_ui_build_ranges DEFINITION
   PUBLIC SECTION.
 
     INTERFACES if_serializable_object.
-    DATA mv_popup_name TYPE string.
 
-    DATA mo_sql TYPE REF TO z2ui5_cl_util_sql.
+    DATA mo_sql    TYPE REF TO z2ui5_cl_util_sql.
+    DATA mo_layout TYPE REF TO z2ui5_cl_layout.
 
     METHODS paint
       IMPORTING
@@ -26,6 +26,8 @@ CLASS z2ui5_cl_ui_build_ranges DEFINITION
     METHODS init_filter_tab.
 
   PROTECTED SECTION.
+    DATA mv_popup_name TYPE string.
+    METHODS init_layout.
   PRIVATE SECTION.
 ENDCLASS.
 
@@ -34,10 +36,12 @@ ENDCLASS.
 CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
 
   METHOD on_event.
+
     CASE client->get( )-event.
 
       WHEN `SELSCREEN_POST`.
         init_filter_tab( ).
+        init_layout( ).
         client->view_model_update( ).
 
       WHEN `UPDATE_TOKENS`.
@@ -47,14 +51,19 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
         mo_sql->count( ).
         client->view_model_update( ).
 
-
       WHEN 'LIST_OPEN'.
         mv_popup_name = client->get_event_arg( ).
         DATA(ls_sql) = mo_sql->ms_sql-t_filter[ name = client->get_event_arg( ) ].
         client->nav_app_call( z2ui5_cl_pop_get_range=>factory( ls_sql-t_range ) ).
         RETURN.
 
+      WHEN 'LIST_DELETE'.
+        CLEAR mo_sql->ms_sql-t_filter[ name = client->get_event_arg( ) ]-t_range.
+        CLEAR mo_sql->ms_sql-t_filter[ name = client->get_event_arg( ) ]-t_token.
+        client->view_model_update( ).
+
     ENDCASE.
+
   ENDMETHOD.
 
   METHOD paint.
@@ -75,19 +84,20 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
                     description = `Tablename`
                     width = '30%'
                     submit = client->_event( `SELSCREEN_POST` )
-                )->button( press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name ) icon = z2ui5_cl_util_sql=>go_button( )-icon_name tooltip = z2ui5_cl_util_sql=>go_button( )-text
-
+                )->button(
+                    press = client->_event( z2ui5_cl_util_sql=>go_button( )-event_name )
+                    icon = z2ui5_cl_util_sql=>go_button( )-icon_name
+                    tooltip = z2ui5_cl_util_sql=>go_button( )-text
              )->input(
              width = '10%'
                     value = client->_bind_edit( mo_sql->ms_sql-count )
                     description = `Rows`
                     )->toolbar_spacer(
          )->checkbox( selected = client->_bind_edit( mo_sql->ms_sql-check_autoload )  text = `Skip`
-                   )->input( value = client->_bind_edit( mo_sql->ms_sql-layout_id ) width = `20%` description = `Layout`
+                   )->input( value = client->_bind( mo_sql->ms_sql-layout_name ) width = `20%` description = `Layout`
                 showvaluehelp = abaP_true
                 valuehelprequest = client->_event( `DISPLAY_POPUP_SELECT_LAYOUT` )
-                valuehelponly = abap_true
-               ) .
+                valuehelponly = abap_true ).
 
     tab->columns(
          )->column(
@@ -103,8 +113,7 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
     cells->text( text = `{NAME}` ).
     DATA(multi) = cells->multi_input( tokens = `{T_TOKEN}`
              name = '{NAME}'
-          valuehelprequest = client->_event( val = `LIST_OPEN` t_arg = VALUE #( ( `${NAME}` ) ) )
-         ).
+          valuehelprequest = client->_event( val = `LIST_OPEN` t_arg = VALUE #( ( `${NAME}` ) ) ) ).
     multi->tokens(
          )->token(
 
@@ -140,7 +149,6 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
   METHOD init_filter_tab.
 
     TRY.
-
         DATA lr_table TYPE REF TO data.
         CREATE DATA lr_table TYPE STANDARD TABLE OF (mo_sql->ms_sql-tabname) WITH EMPTY KEY.
         mo_sql->ms_sql-t_filter = z2ui5_cl_util=>filter_get_multi_by_data( lr_table->* ).
@@ -165,6 +173,22 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
         ENDIF.
       CATCH cx_root.
     ENDTRY.
+
+  ENDMETHOD.
+
+
+  METHOD init_layout.
+
+    mo_sql->ms_sql-layout_name = ``.
+
+    DATA lr_table TYPE REF TO data.
+    CREATE DATA lr_table TYPE TABLE OF spfli.
+    mo_layout = z2ui5_cl_layout=>factory( control  = z2ui5_cl_layout=>m_table
+                                          data     = lr_table
+                                          handle01 = 'Z2UI5_CL_SE16'
+                                          handle02 = mo_sql->ms_sql-tabname
+                                          handle03 = ''
+                                          handle04 = '' ).
 
   ENDMETHOD.
 
