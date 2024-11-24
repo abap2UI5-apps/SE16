@@ -68,7 +68,7 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
 
   METHOD paint.
 
-    init_filter_tab( ).
+*    init_filter_tab( ).
 
     DATA(tab) = view->table(
                              id = `tab`
@@ -113,6 +113,7 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
     cells->text( text = `{NAME}` ).
     DATA(multi) = cells->multi_input( tokens = `{T_TOKEN}`
              name = '{NAME}'
+             enabled = abap_false
           valuehelprequest = client->_event( val = `LIST_OPEN` t_arg = VALUE #( ( `${NAME}` ) ) ) ).
     multi->tokens(
          )->token(

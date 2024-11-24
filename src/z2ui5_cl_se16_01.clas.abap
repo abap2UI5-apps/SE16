@@ -48,7 +48,9 @@ CLASS z2ui5_cl_se16_01 IMPLEMENTATION.
 
     DATA(page) = view->shell( )->page( title          = 'abap2UI5 - SE16 CLOUD - Start'
                                        navbuttonpress = client->_event( 'BACK' )
-                                       shownavbutton  = client->check_app_prev_stack( ) ).
+                                       shownavbutton  = client->check_app_prev_stack( )
+                                        floatingfooter = abap_true
+                                        ).
 
     IF mo_ui_ranges->mo_sql->ms_sql-tabname IS NOT INITIAL.
       mo_ui_ranges->paint( view   = page
@@ -130,6 +132,7 @@ CLASS z2ui5_cl_se16_01 IMPLEMENTATION.
                                           handle03 = ''
                                           handle04 = '' ).
 
+    mo_ui_ranges->init_filter_tab( ).
     view_display( ).
 
   ENDMETHOD.
