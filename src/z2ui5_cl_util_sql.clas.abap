@@ -3,11 +3,11 @@ CLASS z2ui5_cl_util_sql DEFINITION PUBLIC.
 
     INTERFACES if_serializable_object.
 
-    types: begin of t_go_button,
-             event_name type string,
-             icon_name type string,
-             text type string,
-           end of t_go_button.
+    TYPES: BEGIN OF t_go_button,
+             event_name TYPE string,
+             icon_name  TYPE string,
+             text       TYPE string,
+           END OF t_go_button.
 
     CLASS-METHODS factory
       IMPORTING
@@ -20,9 +20,9 @@ CLASS z2ui5_cl_util_sql DEFINITION PUBLIC.
     METHODS read.
     METHODS count.
 
-    class-methods go_button
-                    returning
-                      value(r_val) type z2ui5_cl_util_sql=>t_go_button.
+    CLASS-METHODS go_button
+      RETURNING
+        VALUE(r_val) TYPE z2ui5_cl_util_sql=>t_go_button.
 
 ENDCLASS.
 
@@ -38,7 +38,7 @@ CLASS z2ui5_cl_util_sql IMPLEMENTATION.
 
   METHOD go_button.
 
-    r_val = value #( event_name = `GO`
+    r_val = VALUE #( event_name = `GO`
                      icon_name = `sap-icon://simulate`
                      text = 'Go'(001) ).
 
@@ -57,11 +57,14 @@ CLASS z2ui5_cl_util_sql IMPLEMENTATION.
 
     DATA lv_result TYPE string.
 
+    FIELD-SYMBOLS <table> TYPE ANY TABLE.
+    ASSIGN ms_sql-t_ref->* TO <table>.
+
     SELECT FROM (ms_sql-tabname)
      FIELDS
      *
      WHERE (lv_result)
-     INTO TABLE @ms_sql-t_ref->*
+     INTO TABLE @<table>
      UP TO @ms_sql-count ROWS.
 
 

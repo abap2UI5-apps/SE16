@@ -151,7 +151,7 @@ CLASS z2ui5_cl_ui_build_ranges IMPLEMENTATION.
 
     TRY.
         DATA lr_table TYPE REF TO data.
-        CREATE DATA lr_table TYPE STANDARD TABLE OF (mo_sql->ms_sql-tabname) WITH EMPTY KEY.        
+        CREATE DATA lr_table TYPE STANDARD TABLE OF (mo_sql->ms_sql-tabname) WITH EMPTY KEY.
         ASSIGN lr_table->* TO FIELD-SYMBOL(<table>).
         mo_sql->ms_sql-t_filter = z2ui5_cl_util=>filter_get_multi_by_data( <table> ).
       CATCH cx_sy_create_data_error.
