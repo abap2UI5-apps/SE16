@@ -93,10 +93,11 @@ CLASS z2ui5_cl_se16_01 IMPLEMENTATION.
 
         IF lo_layout-check_confirmed = abap_true.
 
-          DATA(layout) = VALUE z2ui5_layo_t_01( ).
-          layout = lo_layout-row->*.
-          mo_ui_ranges->mo_sql->ms_sql-layout_name = layout-layout.
-          mo_ui_ranges->mo_sql->ms_sql-layout_id   = layout-guid.
+          FIELD-SYMBOLS <layout> TYPE z2ui5_layo_t_01.
+          ASSIGN lo_layout-row->* TO <layout>.
+
+          mo_ui_ranges->mo_sql->ms_sql-layout_name = <layout>-layout.
+          mo_ui_ranges->mo_sql->ms_sql-layout_id   = <layout>-guid.
           client->view_model_update( ).
 
         ENDIF.
